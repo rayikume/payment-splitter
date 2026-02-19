@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -14,7 +14,7 @@ type Config struct {
 func Load() Config {
 	if os.Getenv("APP_ENV") != "production" {
 		if err := godotenv.Load(); err != nil {
-			log.Println("No [.env] file found. Fallback used")
+			slog.Warn("No .env file found, fallback used", "error", err)
 		}
 	}
 

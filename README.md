@@ -1,1 +1,1 @@
-# payment-splitter-api
+# payment-splitter

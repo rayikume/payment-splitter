@@ -38,6 +38,14 @@ func Success(w http.ResponseWriter, status int, data any) {
 	})
 }
 
+func SuccessWithMeta(w http.ResponseWriter, status int, data any, meta *Meta) {
+	JSON(w, status, APIWrapper{
+		Success: true,
+		Data:    data,
+		Meta:    meta,
+	})
+}
+
 func Error(w http.ResponseWriter, status int, code, message string) {
 	JSON(w, status, APIWrapper{
 		Success: false,

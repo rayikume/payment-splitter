@@ -49,6 +49,55 @@ func (p *SplitHandler) Create(w http.ResponseWriter, r *http.Request) {
 	responses.Success(w, http.StatusCreated, split)
 }
 
+func (p *SplitHandler) GetByID(w http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("id")
+
+	if id == "" {
+		responses.Error(w, http.StatusBadRequest, "INVALID_PARAM", "split id is required")
+		return
+	}
+	split, err := p.svc.GetByID(id)
+	if err != nil {
+		mapServiceError(w, err)
+		return
+	}
+
+	responses.Success(w, http.StatusOK, split)
+}
+
+func (p *SplitHandler) Settle(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	var req models.SettleRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		responses.Error(w, http.StatusBadRequest, "INVALID_JSON", "request body is not valid JSON")
+		return
+	}
+	if strings.TrimSpace(req.ParticipantID) == "" {
+		responses.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "participant_id is required")
+		return
+	}
+
+	split, err := p.svc.Settle(id, req.ParticipantID)
+	if err != nil {
+		mapServiceError(w, err)
+		return
+	}
+
+	responses.Success(w, http.StatusOK, split)
+}
+
+func (p *SplitHandler) Delete(w http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("id")
+
+	if err := p.svc.Delete(id); err != nil {
+		mapServiceError(w, err)
+		return
+	}
+
+	responses.Success(w, http.StatusNoContent, nil)
+}
+
 func mapServiceError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, services.ErrSplitNotFound):

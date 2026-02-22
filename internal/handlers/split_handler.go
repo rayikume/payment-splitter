@@ -1,8 +1,13 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
+	"strings"
 
+	"github.com/rayikume/payment-splitter/internal/models"
+	"github.com/rayikume/payment-splitter/internal/responses"
 	"github.com/rayikume/payment-splitter/internal/services"
 )
 
@@ -20,5 +25,43 @@ func (p *SplitHandler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (p *SplitHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req models.CreateSplitRequest
 
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		responses.Error(w, http.StatusBadRequest, "INVALID_JSON", "request body is not valid JSON")
+		return
+	}
+	if strings.TrimSpace(req.Title) == "" {
+		responses.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "created_by is required")
+		return
+	}
+	if req.Currency == "" {
+		responses.Error(w, http.StatusBadRequest, "VALIDATION_ERROR", "currency is required")
+		return
+	}
+
+	split, err := p.svc.Create(req)
+	if err != nil {
+		mapServiceError(w, err)
+		return
+	}
+
+	responses.Success(w, http.StatusCreated, split)
+}
+
+func mapServiceError(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, services.ErrSplitNotFound):
+		responses.Error(w, http.StatusNotFound, "NOT_FOUND", err.Error())
+	case errors.Is(err, services.ErrParticipantNotFound):
+		responses.Error(w, http.StatusNotFound, "PARTICIPANT_NOT_FOUND", err.Error())
+	case errors.Is(err, services.ErrInvalidStrategy),
+		errors.Is(err, services.ErrAmountMismatch),
+		errors.Is(err, services.ErrPercentageMismatch),
+		errors.Is(err, services.ErrLessThanMinimumParticipants),
+		errors.Is(err, services.ErrInvalidAmount):
+		responses.Error(w, http.StatusUnprocessableEntity, "VALIDATION_ERROR", err.Error())
+	default:
+		responses.Error(w, http.StatusInternalServerError, "INTERNAL", "an unexpected error occurred")
+	}
 }

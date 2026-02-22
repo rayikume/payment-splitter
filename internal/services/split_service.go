@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	errParticipantNotFound         = errors.New("participant not found")
-	errSplitNotFound               = errors.New("split not found")
-	errPercentageMismatch          = errors.New("participant percentages do not sum to 100")
-	errAmountMismatch              = errors.New("participant amounts do not sum to total")
-	errInvalidStrategy             = errors.New("invalid split strategy")
-	errInvalidAmount               = errors.New("total amount must be greater than 0")
-	errLessThanMinimumParticipants = errors.New("at least 2 participants are required")
+	ErrParticipantNotFound         = errors.New("participant not found")
+	ErrSplitNotFound               = errors.New("split not found")
+	ErrPercentageMismatch          = errors.New("participant percentages do not sum to 100")
+	ErrAmountMismatch              = errors.New("participant amounts do not sum to total")
+	ErrInvalidStrategy             = errors.New("invalid split strategy")
+	ErrInvalidAmount               = errors.New("total amount must be greater than 0")
+	ErrLessThanMinimumParticipants = errors.New("at least 2 participants are required")
 )
 
 type SplitService struct {
@@ -68,7 +68,7 @@ func (s *SplitService) Settle(splitID, participantID string) (*models.Split, err
 
 	split, ok := s.splits[splitID]
 	if !ok {
-		return nil, errSplitNotFound
+		return nil, ErrSplitNotFound
 	}
 
 	found := false
@@ -81,7 +81,7 @@ func (s *SplitService) Settle(splitID, participantID string) (*models.Split, err
 	}
 
 	if !found {
-		return nil, errParticipantNotFound
+		return nil, ErrParticipantNotFound
 	}
 
 	split.UpdatedAt = time.Now().UTC()
@@ -94,7 +94,7 @@ func (s *SplitService) GetByID(id string) (*models.Split, error) {
 
 	split, ok := s.splits[id]
 	if !ok {
-		return nil, errSplitNotFound
+		return nil, ErrSplitNotFound
 	}
 
 	return split, nil
@@ -106,7 +106,7 @@ func (s *SplitService) Delete(id string) error {
 
 	_, ok := s.splits[id]
 	if !ok {
-		return errSplitNotFound
+		return ErrSplitNotFound
 	}
 
 	delete(s.splits, id)
@@ -115,10 +115,10 @@ func (s *SplitService) Delete(id string) error {
 
 func validateCreateRequest(req models.CreateSplitRequest) error {
 	if req.TotalAmount <= 0 {
-		return errInvalidAmount
+		return ErrInvalidAmount
 	}
 	if len(req.Participants) < 2 {
-		return errLessThanMinimumParticipants
+		return ErrLessThanMinimumParticipants
 	}
 	return nil
 }
@@ -132,7 +132,7 @@ func calculateShares(req models.CreateSplitRequest) ([]models.Participant, error
 	case models.StrategyPercentage:
 		return splitByPercetage(req)
 	default:
-		return nil, errInvalidStrategy
+		return nil, ErrInvalidStrategy
 	}
 }
 
@@ -175,7 +175,7 @@ func splitExact(req models.CreateSplitRequest) ([]models.Participant, error) {
 	}
 
 	if math.Abs(sum-req.TotalAmount) > 0.01 {
-		return nil, fmt.Errorf("%w: got %.2f, expected %.2f", errAmountMismatch, sum, req.TotalAmount)
+		return nil, fmt.Errorf("%w: got %.2f, expected %.2f", ErrAmountMismatch, sum, req.TotalAmount)
 	}
 	return participants, nil
 }
@@ -199,7 +199,7 @@ func splitByPercetage(req models.CreateSplitRequest) ([]models.Participant, erro
 	}
 
 	if math.Abs(totalPrcntg-100) > 0.01 {
-		return nil, fmt.Errorf("%w: got %.2f%%", errPercentageMismatch, totalPrcntg)
+		return nil, fmt.Errorf("%w: got %.2f%%", ErrPercentageMismatch, totalPrcntg)
 	}
 	return participants, nil
 }

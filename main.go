@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/rayikume/payment-splitter/config"
+	"github.com/rayikume/payment-splitter/internal/services"
 )
 
 func main() {
@@ -17,4 +18,6 @@ func main() {
 		Level: slog.LevelDebug,
 	}))
 	slog.SetDefault(logger)
+
+	splitD := services.NewSplitService()
 }

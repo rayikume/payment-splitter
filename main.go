@@ -26,4 +26,6 @@ func main() {
 
 	mux := http.NewServeMux()
 	splitHandler.RegisterRoutes(mux)
+
+	var p http.Handler = mux
 }

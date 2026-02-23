@@ -20,8 +20,16 @@ func NewSplitHandler(svc *services.SplitService) *SplitHandler {
 }
 
 func (p *SplitHandler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		responses.Success(w, http.StatusOK, map[string]string{
+			"status":  "healthy",
+			"service": "payment-splitter",
+		})
+	})
 	mux.HandleFunc("POST /api/v1/splits", p.Create)
-
+	mux.HandleFunc("GET /api/v1/splits/{id}", p.GetByID)
+	mux.HandleFunc("DELETE /api/v1/splits/{id}", p.Delete)
+	mux.HandleFunc("PATCH /api/v1/splits/{id}/settle", p.Settle)
 }
 
 func (p *SplitHandler) Create(w http.ResponseWriter, r *http.Request) {

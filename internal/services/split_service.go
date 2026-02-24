@@ -113,6 +113,31 @@ func (s *SplitService) Delete(id string) error {
 	return nil
 }
 
+func (s *SplitService) List() []models.SplitSummary {
+	s.mux.RLock()
+	defer s.mux.RUnlock()
+
+	summaries := make([]models.SplitSummary, 0, len(s.splits))
+	for _, sp := range s.splits {
+		settled := 0
+		for _, p := range sp.Participants {
+			if p.IsPaid {
+				settled++
+			}
+		}
+		summaries = append(summaries, models.SplitSummary{
+			ID:               sp.ID,
+			Title:            sp.Title,
+			TotalAmount:      sp.TotalAmount,
+			Currency:         sp.Currency,
+			ParticipantCount: len(sp.Participants),
+			SettledCount:     settled,
+			CreatedAt:        sp.CreatedAt,
+		})
+	}
+	return summaries
+}
+
 func validateCreateRequest(req models.CreateSplitRequest) error {
 	if req.TotalAmount <= 0 {
 		return ErrInvalidAmount
